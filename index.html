@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yatrastay – (Vanilla JS)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card: #121318;
+      --muted: #a3a3a3;
+      --text: #f5f5f5;
+      --primary: #6ee7b7;
+      --border: #23252d;
+      --danger: #ef4444;
+      --gold: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg); color: var(--text);
+    }
+    a { color: inherit; text-decoration: none; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+
+    /* Header */
+    header {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: saturate(180%) blur(8px);
+      background: rgba(11,12,16,0.8);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav { display:flex; align-items:center; justify-content: space-between; height: 68px; }
+    .brand { display:flex; align-items:center; gap:10px; font-weight: 800; }
+    .badge { font-size: 11px; padding: 2px 6px; border:1px solid var(--border); border-radius: 999px; color: var(--muted); }
+    .nav-actions { display:flex; align-items:center; gap:10px; }
+    .btn { padding: 10px 14px; border-radius: 10px; border:1px solid var(--border); background:#151721; color:var(--text); cursor:pointer; }
+    .btn:hover { border-color:#2e313b; }
+    .btn.primary { background: linear-gradient(135deg, #10b981, #22c55e); color:#04140c; border-color: transparent; font-weight: 700; }
+    .btn.ghost { background: transparent; }
+
+    /* Hero */
+    .hero { position: relative; min-height: 58vh; display:grid; place-items:center; overflow: hidden; border-bottom:1px solid var(--border); }
+    .hero::before { content:''; position:absolute; inset:0; background:url('https://images.unsplash.com/photo-1505691723518-36a5ac3b2bc5?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat; filter: brightness(0.55); }
+    .hero-inner { position:relative; text-align:center; padding: 48px 16px; }
+    .hero h1 { font-size: clamp(28px, 6vw, 56px); line-height: 1.05; margin: 0 0 12px; }
+    .hero p { color: #e7fdf4; opacity: .9; margin: 0 0 24px; font-size: clamp(14px, 2.5vw, 18px); }
+
+    /* Search bar */
+    .searchbar { display:grid; grid-template-columns: 1.2fr .9fr .9fr .8fr auto; gap:10px; background: rgba(17,19,25,.75); border:1px solid var(--border); padding: 10px; border-radius: 14px; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .label { font-size: 12px; color: var(--muted); }
+    .input, .select { appearance: none; padding: 12px 12px; border:1px solid var(--border); background:#0e1016; color:var(--text); border-radius: 10px; outline:none; }
+    .input:focus, .select:focus { border-color:#2b9a74; }
+
+    /* Grid */
+    .section { padding: 32px 0 56px; }
+    .section h2 { margin: 0 0 16px; font-size: 24px; }
+    .grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
+    @media (max-width: 1000px){ .grid { grid-template-columns: repeat(3, 1fr);} .searchbar { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 700px){ .grid { grid-template-columns: repeat(2, 1fr);} .hero { min-height: 52vh; } }
+    @media (max-width: 480px){ .grid { grid-template-columns: 1fr;} .searchbar { grid-template-columns: 1fr; } }
+
+    /* Card */
+    .card { background: var(--card); border:1px solid var(--border); border-radius: 14px; overflow: hidden; display:flex; flex-direction: column; }
+    .thumb { aspect-ratio: 16/11; background:#0a0b0f; position: relative; overflow: hidden; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; display:block; }
+    .wish { position:absolute; top:10px; right:10px; background:rgba(0,0,0,.55); border:1px solid #2a2d36; backdrop-filter: blur(8px); border-radius: 999px; padding:6px 9px; cursor: pointer; }
+    .wish.active { background: rgba(254, 226, 226, 0.2); border-color: rgba(239,68,68,.6); }
+    .card-body { padding: 12px; display:grid; gap: 8px; }
+    .card-title { font-weight: 700; display:flex; justify-content: space-between; gap: 6px; align-items: center; }
+    .rating { color: var(--gold); font-weight: 700; font-size: 14px; }
+    .meta { color: var(--muted); font-size: 13px; }
+    .amenities { color: #cfcfcf; opacity: .85; font-size: 12px; display:flex; gap: 8px; flex-wrap: wrap; }
+    .price { font-weight: 800; }
+    .card-actions { display:flex; gap: 8px; }
+
+    /* Footer */
+    footer { border-top:1px solid var(--border); color: var(--muted); }
+
+    /* Modal */
+    .modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.55); z-index: 100; }
+    .modal.open { display: flex; }
+    .modal-card { background: var(--card); border:1px solid var(--border); border-radius: 16px; width: min(860px, 92vw); max-height: 86vh; overflow:auto; }
+    .modal-header { display:flex; align-items:center; justify-content: space-between; padding: 14px 16px; border-bottom:1px solid var(--border); }
+    .modal-body { padding: 16px; display:grid; gap: 12px; }
+    .modal-close { background: transparent; border:1px solid var(--border); color: var(--muted); border-radius: 10px; padding: 6px 10px; cursor: pointer; }
+
+    .detail-grid { display:grid; grid-template-columns: 1.2fr .8fr; gap: 16px; }
+    @media (max-width: 840px){ .detail-grid { grid-template-columns: 1fr; } }
+    .detail-gallery { display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; }
+    .detail-gallery img { width:100%; height:180px; object-fit:cover; border-radius: 8px; }
+    .detail-pane { border:1px solid var(--border); border-radius: 12px; padding: 12px; background:#0e1016; }
+    .row { display:flex; gap: 8px; align-items:center; justify-content: space-between; }
+
+    .inline { display:inline-flex; align-items:center; gap:8px; }
+    .pill { padding: 6px 10px; border-radius: 999px; border:1px solid var(--border); background:#0f1117; font-size: 12px; color:#cbd5e1; }
+
+    .empty { text-align:center; color: var(--muted); padding: 24px; border:1px dashed var(--border); border-radius: 12px; }
+
+    /* Auth */
+    .auth { display:grid; gap: 10px; }
+    .auth input { padding: 12px; border-radius: 10px; border:1px solid var(--border); background:#0e1016; color:var(--text); }
+    .auth small { color:var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        <span style="font-size:22px">🏡</span>
+        <span>yatrastay</span>
+        <span class="badge">yatrastay</span>
+      </div>
+      <div class="nav-actions">
+        <button class="btn ghost" id="open-wishlist">❤ Wishlist</button>
+        <button class="btn ghost" id="open-host">＋ Host</button>
+        <button class="btn" id="open-login">Sign in</button>
+        <button class="btn primary" id="open-bookings">My bookings</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner container">
+      <h1>Find your perfect <span style="color:var(--primary)">stay</span></h1>
+      <p>Search unique homes around the world. Secure booking.</p>
+
+      <div class="searchbar" id="searchbar">
+        <div class="field">
+          <label class="label">Location</label>
+          <input class="input" id="qLocation" placeholder="Goa, Mumbai, New York…" />
+        </div>
+        <div class="field">
+          <label class="label">Check-in</label>
+          <input class="input" type="date" id="qIn" />
+        </div>
+        <div class="field">
+          <label class="label">Check-out</label>
+          <input class="input" type="date" id="qOut" />
+        </div>
+        <div class="field">
+          <label class="label">Max price / night</label>
+          <select class="select" id="qPrice">
+            <option value="">Any</option>
+            <option value="100">₹100</option>
+            <option value="200">₹200</option>
+            <option value="300">₹300</option>
+            <option value="400">₹400</option>
+            <option value="500">₹500</option>
+          </select>
+        </div>
+        <div class="field" style="align-self:end">
+          <button class="btn primary" id="doSearch">Search</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="container section">
+    <h2>Popular stays</h2>
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty" style="display:none">No results. Try clearing filters.</div>
+  </main>
+
+  <footer class="section">
+    <div class="container">
+      <p>© <span id="year"></span> YatraStay.</p>
+    </div>
+  </footer>
+
+  <!-- Property Detail Modal -->
+  <div class="modal" id="propertyModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <strong id="detailTitle">Property</strong>
+        <div>
+          <button class="modal-close" data-close>Close ✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div>
+            <div class="detail-gallery" id="detailGallery"></div>
+            <div class="amenities" id="detailAmenities"></div>
+          </div>
+          <div class="detail-pane">
+            <div class="row"><span class="inline">📍 <span id="detailLocation"></span></span><span class="rating" id="detailRating"></span></div>
+            <div class="row"><span class="price" id="detailPrice"></span><span class="pill" id="detailType"></span></div>
+            <hr style="border:none;border-top:1px solid var(--border); margin:10px 0">
+            <div class="field">
+              <label class="label">Check‑in</label>
+              <input class="input" type="date" id="bookIn">
+            </div>
+            <div class="field">
+              <label class="label">Check‑out</label>
+              <input class="input" type="date" id="bookOut">
+            </div>
+            <div class="row"><span>Nights</span><strong id="bookNights">0</strong></div>
+            <div class="row"><span>Total</span><strong id="bookTotal">₹0</strong></div>
+            <button class="btn primary" id="bookBtn">Book now</button>
+            <small class="label">Availability is mocked — overlaps blocked per saved bookings.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div class="modal" id="authModal" aria-hidden="true">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <strong id="authHeading">Sign in</strong>
+        <button class="modal-close" data-close>Close ✕</button>
+      </div>
+      <div class="modal-body">
+        <form class="auth" id="authForm">
+          <input type="email" id="authEmail" placeholder="Email" required>
+          <input type="password" id="authPass" placeholder="Password" required>
+          <button class="btn primary" type="submit">Continue</button>
+          <small>Demo only: credentials saved in localStorage.</small>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simple list modals -->
+  <div class="modal" id="wishlistModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header"><strong>Wishlist</strong><button class="modal-close" data-close>Close ✕</button></div>
+      <div class="modal-body"><div id="wishlistList"></div></div>
+    </div>
+  </div>
+  <div class="modal" id="bookingsModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header"><strong>My bookings</strong><button class="modal-close" data-close>Close ✕</button></div>
+      <div class="modal-body"><div id="bookingsList"></div></div>
+    </div>
+  </div>
+  <div class="modal" id="hostModal" aria-hidden="true">
+    <div class="modal-card" style="max-width:720px;">
+      <div class="modal-header"><strong>Host a new property</strong><button class="modal-close" data-close>Close ✕</button></div>
+      <div class="modal-body">
+        <form id="hostForm" class="auth">
+          <input id="hTitle" placeholder="Title" required>
+          <input id="hLocation" placeholder="Location (e.g., Goa, India)" required>
+          <input id="hPrice" type="number" min="1" placeholder="Price per night (₹)" required>
+          <input id="hType" placeholder="Type (Apartment, Villa, Loft)" required>
+          <input id="hImages" placeholder="Image URLs (comma separated)" required>
+          <input id="hAmenities" placeholder="Amenities (comma separated)" required>
+          <button class="btn primary" type="submit">Add listing</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ------- Mock DB (localStorage backed) -------
+  const db = {
+    properties: [
+      { id: '1', title: 'Modern Beachfront Villa', location: 'Calangute, Goa', price: 350, rating: 4.9, images: [
+        'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=1200&auto=format&fit=crop'
+      ], type: 'Villa', amenities: ['WiFi','Pool','Beach Access','Kitchen'] },
+      { id: '2', title: 'Cozy Mountain Cabin', location: 'Manali, Himachal', price: 200, rating: 4.8, images: [
+        'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop'
+      ], type: 'Cabin', amenities: ['Fireplace','Hot Tub','Ski Access','Pet Friendly'] },
+      { id: '3', title: 'Downtown Luxury Loft', location: 'New York, USA', price: 450, rating: 4.7, images: [
+        'https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1523217582562-09d0def993a6?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1522156373667-4c7234bbd804?q=80&w=1200&auto=format&fit=crop'
+      ], type: 'Loft', amenities: ['City View','Gym','Concierge','Rooftop'] },
+      { id: '4', title: 'Rustic Country House', location: 'Tuscany, Italy', price: 280, rating: 4.9, images: [
+        'https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=1200&auto=format&fit=crop'
+      ], type: 'House', amenities: ['Garden','Wine Cellar','Pool','Valley View'] }
+    ],
+    bookings: JSON.parse(localStorage.getItem('bookings')||'[]'),
+    users: JSON.parse(localStorage.getItem('users')||'[]'),
+    wishlist: JSON.parse(localStorage.getItem('wishlist')||'[]'),
+    currentUser: JSON.parse(localStorage.getItem('currentUser')||'null')
+  };
+  function persist(){
+    localStorage.setItem('bookings', JSON.stringify(db.bookings));
+    localStorage.setItem('users', JSON.stringify(db.users));
+    localStorage.setItem('wishlist', JSON.stringify(db.wishlist));
+    localStorage.setItem('currentUser', JSON.stringify(db.currentUser));
+  }
+
+  // ------- Utilities -------
+  const $ = (sel, el=document) => el.querySelector(sel);
+  const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+  const formatINR = (n) => `₹${Number(n).toLocaleString('en-IN')}`;
+  const nightsBetween = (a,b) => {
+    const d1 = new Date(a), d2 = new Date(b);
+    return Math.max(0, Math.round((d2-d1)/(1000*60*60*24)));
+  };
+
+  // ------- Render grid -------
+  const grid = $('#grid');
+  function renderGrid(list){
+    grid.innerHTML = '';
+    if(!list.length){ $('#empty').style.display='block'; return; } else { $('#empty').style.display='none'; }
+    list.forEach(p => {
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="thumb">
+          <img src="${p.images[0]}" alt="${p.title}">
+          <button class="wish ${db.wishlist.includes(p.id)?'active':''}" aria-label="Wishlist" data-id="${p.id}">❤</button>
+        </div>
+        <div class="card-body">
+          <div class="card-title">
+            <span>${p.title}</span>
+            <span class="rating">★ ${p.rating}</span>
+          </div>
+          <div class="meta">${p.location}</div>
+          <div class="amenities">${p.amenities.slice(0,4).map(a=>`<span class="pill">${a}</span>`).join('')}</div>
+          <div class="row"><span class="price">${formatINR(p.price)}</span><span class="label">/ night</span></div>
+          <div class="card-actions">
+            <button class="btn" data-open="${p.id}">View</button>
+            <button class="btn primary" data-quickbook="${p.id}">Quick book</button>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+  renderGrid(db.properties);
+
+  // Wishlist toggle
+  grid.addEventListener('click', (e)=>{
+    const wishBtn = e.target.closest('.wish');
+    if(wishBtn){
+      const id = wishBtn.getAttribute('data-id');
+      const idx = db.wishlist.indexOf(id);
+      if(idx>-1) db.wishlist.splice(idx,1); else db.wishlist.push(id);
+      persist();
+      renderGrid(currentList);
+    }
+    const openBtn = e.target.closest('[data-open]');
+    if(openBtn){ openDetail(openBtn.getAttribute('data-open')); }
+    const qb = e.target.closest('[data-quickbook]');
+    if(qb){ openDetail(qb.getAttribute('data-quickbook')); }
+  });
+
+  // ------- Search -------
+  let currentList = db.properties.slice(0);
+  $('#doSearch').addEventListener('click', ()=>{
+    const loc = $('#qLocation').value.trim().toLowerCase();
+    const price = Number($('#qPrice').value || 0);
+    const start = $('#qIn').value, end = $('#qOut').value;
+
+    currentList = db.properties.filter(p=>{
+      const okLoc = !loc || p.location.toLowerCase().includes(loc) || p.title.toLowerCase().includes(loc);
+      const okPrice = !price || p.price <= price;
+      const okAvail = (!start || !end) ? true : isAvailable(p.id, start, end);
+      return okLoc && okPrice && okAvail;
+    });
+    renderGrid(currentList);
+  });
+
+  // ------- Availability & bookings -------
+  function isOverlap(aStart,aEnd,bStart,bEnd){
+    return (new Date(aStart) < new Date(bEnd)) && (new Date(bStart) < new Date(aEnd));
+  }
+  function isAvailable(propertyId, start, end){
+    return !db.bookings.some(b => b.propertyId===propertyId && isOverlap(start,end,b.checkIn,b.checkOut));
+  }
+
+  // ------- Property detail modal -------
+  const propertyModal = $('#propertyModal');
+  let activeProperty = null;
+
+  function openDetail(id){
+    const p = db.properties.find(x=>x.id===id);
+    if(!p) return;
+    activeProperty = p;
+    $('#detailTitle').textContent = p.title;
+    $('#detailLocation').textContent = p.location;
+    $('#detailRating').textContent = `★ ${p.rating}`;
+    $('#detailPrice').textContent = `${formatINR(p.price)} / night`;
+    $('#detailType').textContent = p.type;
+    $('#detailAmenities').innerHTML = p.amenities.map(a=>`<span class="pill">${a}</span>`).join(' ');
+    const gal = $('#detailGallery');
+    gal.innerHTML = p.images.map(src=>`<img src="${src}" alt="${p.title}">`).join('');
+
+    const today = new Date();
+    const tomorrow = new Date(Date.now()+86400000);
+    $('#bookIn').valueAsDate = today;
+    $('#bookOut').valueAsDate = tomorrow;
+    updateTotal();
+
+    propertyModal.classList.add('open');
+  }
+
+  function closeModal(el){ el.classList.remove('open'); }
+  $$('[data-close]').forEach(b => b.addEventListener('click', e=> closeModal(e.target.closest('.modal'))));
+  [propertyModal, $('#authModal'), $('#wishlistModal'), $('#bookingsModal'), $('#hostModal')].forEach(m=>{
+    m.addEventListener('click', (e)=>{ if(e.target===m) closeModal(m); });
+  });
+
+  function updateTotal(){
+    const start = $('#bookIn').value, end = $('#bookOut').value;
+    const n = nightsBetween(start, end);
+    $('#bookNights').textContent = n;
+    const total = n * (activeProperty?.price||0);
+    $('#bookTotal').textContent = formatINR(total);
+  }
+  $('#bookIn').addEventListener('change', updateTotal);
+  $('#bookOut').addEventListener('change', updateTotal);
+
+  $('#bookBtn').addEventListener('click', ()=>{
+    if(!activeProperty) return;
+    const start = $('#bookIn').value, end = $('#bookOut').value;
+    if(!start || !end) return alert('Select dates');
+    if(!isAvailable(activeProperty.id, start, end)) return alert('Those dates are already booked for this property.');
+
+    if(!db.currentUser){
+      $('#authHeading').textContent = 'Sign in to book';
+      $('#authModal').classList.add('open');
+      return;
+    }
+    const total = nightsBetween(start,end) * activeProperty.price;
+    db.bookings.push({ id: String(Date.now()), userId: db.currentUser.email, propertyId: activeProperty.id, checkIn: start, checkOut: end, total });
+    persist();
+    alert('Booking confirmed!');
+    closeModal(propertyModal);
+  });
+
+  // ------- Auth (very simple, localStorage) -------
+  $('#open-login').addEventListener('click', ()=>{ $('#authHeading').textContent = db.currentUser? 'You are signed in' : 'Sign in'; $('#authModal').classList.add('open'); });
+  $('#authForm').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const email = $('#authEmail').value.trim();
+    const pass = $('#authPass').value.trim();
+    if(!email || !pass) return;
+    let user = db.users.find(u=>u.email===email);
+    if(!user){ user = { email, role:'guest', createdAt: new Date().toISOString() }; db.users.push(user); }
+    db.currentUser = user; persist();
+    alert('Signed in as '+email);
+    closeModal($('#authModal'));
+  });
+
+  // ------- Wishlist & Bookings views -------
+  $('#open-wishlist').addEventListener('click', ()=>{
+    const list = db.wishlist.map(id=> db.properties.find(p=>p.id===id)).filter(Boolean);
+    const box = $('#wishlistList');
+    if(!list.length){ box.innerHTML = '<div class="empty">No favorites yet.</div>'; }
+    else {
+      box.innerHTML = '<div class="grid">'+ list.map(p=>`<div class="card"><div class="thumb"><img src="${p.images[0]}"></div><div class="card-body"><div class="card-title"><span>${p.title}</span><span class="rating">★ ${p.rating}</span></div><div class="meta">${p.location}</div><div class="row"><span class="price">${formatINR(p.price)}</span><span class="label">/ night</span></div><button class="btn" data-open="${p.id}">View</button></div></div>`).join('') + '</div>';
+    }
+    $('#wishlistModal').classList.add('open');
+  });
+
+  $('#open-bookings').addEventListener('click', ()=>{
+    if(!db.currentUser){ $('#authModal').classList.add('open'); return; }
+    const my = db.bookings.filter(b=>b.userId===db.currentUser.email).sort((a,b)=> new Date(a.checkIn)-new Date(b.checkIn));
+    const box = $('#bookingsList');
+    if(!my.length){ box.innerHTML = '<div class="empty">No bookings yet.</div>'; }
+    else {
+      box.innerHTML = '<div class="grid">'+ my.map(b=>{
+        const p = db.properties.find(x=>x.id===b.propertyId);
+        return `<div class="card"><div class="thumb"><img src="${p.images[0]}"></div><div class="card-body"><div class="card-title"><span>${p.title}</span><span class="label">${p.type}</span></div><div class="meta">${p.location}</div><div class="row"><span>${b.checkIn}</span><span>→</span><span>${b.checkOut}</span></div><div class="row"><span>Total</span><strong>${formatINR(b.total)}</strong></div></div></div>`;
+      }).join('') + '</div>';
+    }
+    $('#bookingsModal').classList.add('open');
+  });
+
+  // ------- Host: add property -------
+  $('#open-host').addEventListener('click', ()=>{
+    if(!db.currentUser){ $('#authHeading').textContent = 'Sign in to host'; $('#authModal').classList.add('open'); return; }
+    $('#hostModal').classList.add('open');
+  });
+  $('#hostForm').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const p = {
+      id: String(Date.now()),
+      title: $('#hTitle').value.trim(),
+      location: $('#hLocation').value.trim(),
+      price: Number($('#hPrice').value),
+      type: $('#hType').value.trim(),
+      images: $('#hImages').value.split(',').map(s=>s.trim()).filter(Boolean),
+      amenities: $('#hAmenities').value.split(',').map(s=>s.trim()).filter(Boolean),
+      rating: 4.6
+    };
+    if(!p.title || !p.location || !p.price || !p.images.length){ return alert('Fill all required fields.'); }
+    db.properties.unshift(p);
+    renderGrid(db.properties);
+    closeModal($('#hostModal'));
+    e.target.reset();
+    alert('Listing added!');
+  });
+
+  // Footer year
+  $('#year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>   this is my code i want to seprate with html css and js so it gets in structured form 
